@@ -5,20 +5,28 @@ import numpy as np
 
 pygame.init()
 
-#Tamaño de la ventana
+#Tamaño de la ventana del juego que abre pygame
 win = pygame.display.set_mode((500, 500))
+#Título de la ventana de pygame
 pygame.display.set_caption("First Game")
 
+#Coordenadas iniciales de la figura
 x = 50
 y = 50
+#Tamaño de la figura
 width = 40
 height = 60
+
+#Velicidad a la que se mueve la figura, la velocidad es la cantidad de pixeles que se mueve
 vel = 5
 
 run = True
+
+#Selección del umbral del color azul
 azulBajo = np.array([100,100,20],np.uint8)
 azulAlto = np.array([125,255,255],np.uint8)
 
+#Inicialización de la cámara
 cap = cv2.VideoCapture(0)
 
 while run:
@@ -26,7 +34,6 @@ while run:
     
     #Capturar la imagen
     ret, frame = cap.read()
-    # gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     if ret==True:
         frameHSV = cv2.cvtColor(frame,cv2.COLOR_BGR2HSV)
         mask = cv2.inRange(frameHSV,azulBajo,azulAlto)
