@@ -8,7 +8,7 @@ pygame.init()
 #Tamaño de la ventana del juego que abre pygame
 win = pygame.display.set_mode((640, 480))
 #Título de la ventana de pygame
-pygame.display.set_caption("The Game")
+pygame.display.set_caption("First Game")
 
 #Coordenadas iniciales de la figura
 x = 30
