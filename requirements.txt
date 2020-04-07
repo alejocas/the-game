@@ -1,2 +1,2 @@
 opencv-python
-pygame
+pygame==2.0.0.dev6
