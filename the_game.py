@@ -54,7 +54,6 @@ step_size = 10  #Fall speed
 run = True 
 gamer_loses = False
 
-
 #Setting the colors thresholds
 lower_blue = np.array ([82,51, 51]) # Lower blue threshold
 higher_blue = np.array([133, 255, 255]) # Higher blue threshold
@@ -71,18 +70,18 @@ def color_capture(cap, higher_color, lower_color, x):
         frame_hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV) #Converting from RGB to HSV
         mask = cv2.inRange(frame_hsv, lower_color, higher_color) #Creating the mask with the range of colors on the frame
         contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE) # Catching the red/blue contours 
-         for c in contours: # Mapping all the found contours
-          area = cv2.contourArea(c) #Catching the contour area
-          if area > 3000:
-            M = cv2.moments(c)
-            if (M["m00"] == 0): M["m00"]=1
-            x = int(M["m10"]/M["m00"]) #Getting the x coordinate
-            y = 0 # Setting  the y coordinate to 0 because we don't want to move the floor vertically 
-            cv2.circle(frame, (x,y), 7, (0,255,0), -1) 
-            font = cv2.FONT_HERSHEY_SIMPLEX
-            cv2.putText(frame, '{},{}'.format(x,y),(x+10,y), font, 0.75,(0,255,0),1,cv2.LINE_AA)
-            nuevoContorno = cv2.convexHull(c)
-            cv2.drawContours(frame, [nuevoContorno], 0, (255,0,0), 3) #Drawing the found contours
+        for c in contours: # Mapping all the found contours
+            area = cv2.contourArea(c) #Catching the contour area
+            if area > 3000:
+                M = cv2.moments(c)
+                if (M["m00"] == 0): M["m00"]=1
+                x = int(M["m10"]/M["m00"]) #Getting the x coordinate
+                y = 0 # Setting  the y coordinate to 0 because we don't want to move the floor vertically 
+                cv2.circle(frame, (x,y), 7, (0,255,0), -1) 
+                font = cv2.FONT_HERSHEY_SIMPLEX
+                cv2.putText(frame, '{},{}'.format(x,y),(x+10,y), font, 0.75,(0,255,0),1,cv2.LINE_AA)
+                nuevoContorno = cv2.convexHull(c)
+                cv2.drawContours(frame, [nuevoContorno], 0, (255,0,0), 3) #Drawing the found contours
         cv2.imshow('frame',frame) # Displaying the frame with the contours and the coordinates
     return x
 
@@ -140,8 +139,9 @@ while run:
     if len(floor_stack) == 0: # This if allows us to draw the first floor in the ground.
         first_floor_stack = (first_floor,x_first_floor,615)
         floor_stack.append(first_floor_stack)
-    if gamer_loses: #When the player loses, we draw the buttons for "exit" or "start over".
-        draw_buttons(try_again_button) #We are calling the method who draws the buttons on the pygame window.
+    if gamer_loses or len(floor_stack) == 8: #When the player loses, we draw the buttons for "exit" or "start over". When the player wins, he/she wins :v
+        image_condition = win_button if len(floor_stack) == 8 else try_again_button
+        draw_buttons(image_condition) #We are calling the method who draws the buttons on the pygame window.
         pygame.display.update()
         keys = pygame.key.get_pressed()
         if keys[pygame.K_a]: #If the user presses the "a" key on the keyboard, the game will start over.
