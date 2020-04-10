@@ -3,120 +3,144 @@ import cv2
 import numpy as np
 import random
 
+#This is a project for Digital Image Processing (DIP) course at the Universidad de Antioquia.
 
+# CREATORS
+# Alejandro Castaño Rojas - alejocast
+# Angelica Arroyave Mendoza - am9805
+
+# DESCRIPTION
+# THE GAME! It is a construction simulator in which you must build a 7-story building !. 
+# The challenge is to position the floors according to the floor that predicts it.
+# You can position the floor using something blue in front of your camerera  
+# and you can release the floor using something red in front of your camerera.
+
+# TECHNOLOGIES
+# Python 3
+# OpenCV 3
+# Pygames (python library)
+# Numpy (python library)
+# Random (python library)
+
+#Game initialization
 pygame.init()
 
-#Tamaño de la ventana del juego que abre pygame
+#Window setup
 game_height = 722
-win = pygame.display.set_mode((640, game_height))
-#Título de la ventana de pygame
-pygame.display.set_caption("The Game")
-bg = pygame.image.load('./Assets/background.png')
+window_game = pygame.display.set_mode((630, game_height)) #Size
+pygame.display.set_caption("The Game") #Título de la ventana de pygame
+
+#Loading the assets for the game
+background = pygame.image.load('./Assets/background.png')
 floor = pygame.image.load('./Assets/floor.png')
 first_floor = pygame.image.load('./Assets/first_floor.png')
 exit_button = pygame.image.load('./Assets/exit_button.png')
 try_again_button = pygame.image.load('./Assets/try_again_button.png')
-win.blit(bg, (0,0))
+win_button = pygame.image.load('./Assets/win_button.png')
+
+#Adding the background image
+window_game.blit(background, (0,0))
 pygame.display.update() 
-#Coordenadas iniciales de la figura
+
+#Seting up the coordinates and constants
 x = 0
 y = 0
-#Tamaño de la figura
 width = 60
 height = 73
 x_first_floor = random.randint(10, 600)
+floor_stack = []
 red_detected = False
-step_size = 10
-#Velicidad a la que se mueve la figura, la velocidad es la cantidad de pixeles que se mueve
-vel = 5
-
-run = True
+step_size = 10  #Fall speed
+run = True 
 gamer_loses = False
-#Selección del umbral del color azul
-l_h = 82
-l_s = 51
-l_v = 51
-u_h = 133
-u_s = 255
-u_v = 255
-lower_blue = np.array ([l_h, l_s, l_v]) #Umbral del azul bajo
-higher_blue = np.array([u_h, u_s, u_v]) #Umbral del azul alto :3
-lower_red = np.array ([0, 161, 0]) #Umbral del rojo bajo
-higher_red = np.array([17,219, 255]) #Umbral del rojo alto :3
 
 
+#Setting the colors thresholds
+lower_blue = np.array ([82,51, 51]) # Lower blue threshold
+higher_blue = np.array([133, 255, 255]) # Higher blue threshold
+lower_red = np.array ([0, 161, 0]) # Lower red threshold
+higher_red = np.array([17,219, 255]) # Higher red threshold
+
+# In this method we use the OpenCV library to catch the frame of the computer camera and 
+# detect the objects with the specific color.
 def color_capture(cap, higher_color, lower_color, x):
-    #Capturar la imagen
-    ret, frame = cap.read()
+    ret, frame = cap.read() 
     if ret==True:
-        frame_hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV) # define range of blue color in HSV
-        mask = cv2.inRange(frame_hsv, lower_color, higher_color)
-        contornos, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL,
-        cv2.CHAIN_APPROX_SIMPLE)
-        for c in contornos:
-          area = cv2.contourArea(c)
+        # We use the the HSV (Hue, Saturation, Value) format because is used to separate image luminance 
+        # from color information. This makes it easier when we are working on or need luminance of the image/frame.
+        frame_hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV) #Converting from RGB to HSV
+        mask = cv2.inRange(frame_hsv, lower_color, higher_color) #Creating the mask with the range of colors on the frame
+        contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE) # Catching the red/blue contours 
+         for c in contours: # Mapping all the found contours
+          area = cv2.contourArea(c) #Catching the contour area
           if area > 3000:
             M = cv2.moments(c)
             if (M["m00"] == 0): M["m00"]=1
-            x = int(M["m10"]/M["m00"])
-            y = 0
-            cv2.circle(frame, (x,y), 7, (0,255,0), -1)
+            x = int(M["m10"]/M["m00"]) #Getting the x coordinate
+            y = 0 # Setting  the y coordinate to 0 because we don't want to move the floor vertically 
+            cv2.circle(frame, (x,y), 7, (0,255,0), -1) 
             font = cv2.FONT_HERSHEY_SIMPLEX
             cv2.putText(frame, '{},{}'.format(x,y),(x+10,y), font, 0.75,(0,255,0),1,cv2.LINE_AA)
             nuevoContorno = cv2.convexHull(c)
-            cv2.drawContours(frame, [nuevoContorno], 0, (255,0,0), 3)
-        cv2.imshow('frame',frame)
+            cv2.drawContours(frame, [nuevoContorno], 0, (255,0,0), 3) #Drawing the found contours
+        cv2.imshow('frame',frame) # Displaying the frame with the contours and the coordinates
     return x
 
-def draw_still_rectangles(rect_array):
-    for i in range(len(rect_array)):
-        floor_image,x_pos,y_pos = rect_array[i]
+# This method draws the floor on the pygame window with determined coordinates.
+def draw_floor(floor_image,x_pos, y_pos):
+    window_game.blit(floor_image,(x_pos, y_pos))
+
+# This method consults the floor_array (which contains the fallen floors) and draws them on the canvas.
+def draw_still_floors(floor_array):
+    for i in range(len(floor_array)):
+        floor_image,x_pos,y_pos = floor_array[i]
         draw_floor(floor_image,x_pos, y_pos)
 
-def draw_floor(floor_image,x_pos, y_pos):
-    win.blit(floor_image,(x_pos, y_pos))
-
+# This method is called for drawing the game buttons.
 def draw_buttons(second_button_name):
-    win.blit(exit_button,(100, 250))             
-    win.blit(second_button_name,(300, 250))
+    window_game.blit(exit_button,(100, 250))             
+    window_game.blit(second_button_name,(300, 250))
 
-# Inicialización de la cámara
+# Camera initialization
 cap = cv2.VideoCapture(0)
 print(cap.get(3), cap.get(4))
-floor_stack = []
 
+
+#This while is our principal thread, is in charge of the game loop.
 while run:
     
     pygame.time.delay(100)  # This will delay the game the given amount of milliseconds. In our casee 0.1 seconds will be the delay
-    x = color_capture(cap, higher_blue, lower_blue, x)  # Obtenemos las coordenadas del objeto azul
-    red_validation = color_capture(cap, higher_red, lower_red, 0)
-    # Movimientos de la figura
+    x = color_capture(cap, higher_blue, lower_blue, x)  # Catching the blue object coordinates
+    red_validation = color_capture(cap, higher_red, lower_red, 0) # Detecting the red object
+
+    # Floor movements
     if not(red_detected):  # Checks is user is not putting a red object
         if red_validation != 0:
             red_detected = True
     else:
-        if x >= x_first_floor - 50 and x <= x_first_floor + 50: 
-            if (y + height<= floor_stack[len(floor_stack) - 1][2]):
+        if x >= x_first_floor - 50 and x <= x_first_floor + 50: # Checking if the fallen floor is nearby the previous floor.
+            if (y + height<= floor_stack[len(floor_stack) - 1][2]): #Check if the floor is already on the target spot.
                 y += step_size
-            else:  # This will execute if our jump is finished
+            else:  # This will execute if our floor finally get to the floor; the floor is added to the falled_floor stack and start with a new one.
                 red_detected = False
                 falled_floor = (floor,x, y)
                 floor_stack.append(falled_floor)
                 x, y = 0, 0
                 # Resetting our Variables
-        else:
-            if (y + height<= game_height):
+        else: # If the fallen if far away from the previous one, then we let it fall until the floor touches the "y" limit.
+            if (y + height*1.5 <= game_height):
                 y += step_size
-            else:                
+            else:    # When it touches the "y" limit, the player loses.       
                 gamer_loses = True
 
-    win.blit(bg, (0,0))
-    draw_floor(floor,x,y)
-    draw_still_rectangles(floor_stack)
-    if len(floor_stack) == 0:
+    window_game.blit(background, (0,0))
+    draw_floor(floor,x,y) #Drawing the main floor.
+    draw_still_floors(floor_stack) # Checking if there is a floor in the fallen stack and drawing them.
+
+    if len(floor_stack) == 0: # This if allows us to draw the first floor in the ground.
         first_floor_stack = (first_floor,x_first_floor,615)
         floor_stack.append(first_floor_stack)
-    if gamer_loses:
+    if gamer_loses: #When the player loses, we draw the buttons for "exit" or "start over".
         draw_buttons(try_again_button) #We are calling the method who draws the buttons on the pygame window.
         pygame.display.update()
         keys = pygame.key.get_pressed()
@@ -135,11 +159,11 @@ while run:
       if event.type == pygame.QUIT:  # Checks if the red button in the corner of the window is clicked
         run = False  # Ends the game loop and closes the video capturing.
     k = cv2.waitKey(1) 
-    if k == 27:  # Ends the Video Capturing and closes the game
+    if k == 27:  # Ends the Video Capturing and closes the game.
         break
 
 
-pygame.quit()  # If we exit the loop this will execute and close our game
+pygame.quit()  # If we exit the loop this will execute and close our game.
 
 cap.release()
 cv2.destroyAllWindows()
