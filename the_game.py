@@ -11,9 +11,11 @@ game_height = 722
 win = pygame.display.set_mode((640, game_height))
 #Título de la ventana de pygame
 pygame.display.set_caption("The Game")
-bg = pygame.image.load('./Assets/bkg.png')
-floor = pygame.image.load('./Assets/roofPP.png')
-first_floor = pygame.image.load('./Assets/first_floor2.png')
+bg = pygame.image.load('./Assets/background.png')
+floor = pygame.image.load('./Assets/floor.png')
+first_floor = pygame.image.load('./Assets/first_floor.png')
+exit_button = pygame.image.load('./Assets/exit_button.png')
+try_again_button = pygame.image.load('./Assets/try_again_button.png')
 win.blit(bg, (0,0))
 pygame.display.update() 
 #Coordenadas iniciales de la figura
@@ -29,7 +31,7 @@ step_size = 10
 vel = 5
 
 run = True
-
+gamer_loses = False
 #Selección del umbral del color azul
 l_h = 82
 l_s = 51
@@ -70,21 +72,25 @@ def draw_still_rectangles(rect_array):
     for i in range(len(rect_array)):
         floor_image,x_pos,y_pos = rect_array[i]
         draw_floor(floor_image,x_pos, y_pos)
-        # pygame.display.update(rect_array[i])
 
 def draw_floor(floor_image,x_pos, y_pos):
     win.blit(floor_image,(x_pos, y_pos))
+
+def draw_buttons(second_button_name):
+    win.blit(exit_button,(100, 250))             
+    win.blit(second_button_name,(300, 250))
 
 # Inicialización de la cámara
 cap = cv2.VideoCapture(0)
 print(cap.get(3), cap.get(4))
 floor_stack = []
+
 while run:
+    
     pygame.time.delay(100)  # This will delay the game the given amount of milliseconds. In our casee 0.1 seconds will be the delay
     x = color_capture(cap, higher_blue, lower_blue, x)  # Obtenemos las coordenadas del objeto azul
     red_validation = color_capture(cap, higher_red, lower_red, 0)
     # Movimientos de la figura
-    keys = pygame.key.get_pressed()  # This will give us a dictonary where each key has a value of 1 or 0. Where 1 is pressed and 0 is not pressed.
     if not(red_detected):  # Checks is user is not putting a red object
         if red_validation != 0:
             red_detected = True
@@ -101,26 +107,41 @@ while run:
         else:
             if (y + height<= game_height):
                 y += step_size
-            else:
-                red_detected = False
-                x, y = 0, 0
+            else:                
+                gamer_loses = True
+
     win.blit(bg, (0,0))
     draw_floor(floor,x,y)
     draw_still_rectangles(floor_stack)
     if len(floor_stack) == 0:
         first_floor_stack = (first_floor,x_first_floor,615)
         floor_stack.append(first_floor_stack)
+    if gamer_loses:
+        draw_buttons(try_again_button) #We are calling the method who draws the buttons on the pygame window.
+        pygame.display.update()
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_a]: #If the user presses the "a" key on the keyboard, the game will start over.
+            red_detected = False
+            x, y = 0, 0
+            gamer_loses = False
+            floor_stack = []
+            x_first_floor = random.randint(10, 600)
+        if keys[pygame.K_b]: #If the user presses the "b" key on the keyboard, the game will be closed.
+            run = False
     pygame.display.update()
- 
-    # For closing the windows
+
+    # For closing the windows in general.
     for event in pygame.event.get():  # This will loop through a list of any keyboard or mouse events.
       if event.type == pygame.QUIT:  # Checks if the red button in the corner of the window is clicked
-        run = False  # Ends the game loop
+        run = False  # Ends the game loop and closes the video capturing.
     k = cv2.waitKey(1) 
-    if k == 27:  # Salir del programa con ESC
+    if k == 27:  # Ends the Video Capturing and closes the game
         break
+
 
 pygame.quit()  # If we exit the loop this will execute and close our game
 
 cap.release()
 cv2.destroyAllWindows()
+
+
