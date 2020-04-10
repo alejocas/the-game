@@ -5,9 +5,16 @@ import random
 
 #This is a project for Digital Image Processing (DIP) course at the Universidad de Antioquia.
 
-# CREATORS
-# Alejandro Castaño Rojas - alejocast
-# Angelica Arroyave Mendoza - am9805
+#--------------------------------------------------------------------------
+#------- THE GAME ----------------------------------------------
+#------- Conceptos básicos de PDI------------------------------------------
+#------- Por: Alejandro Castaño Rojas  alejandro.castanor@udea.edu.co -----
+#------- CC 1020484140  ---------------------------------------------------
+#------- Por: Angélica Arroyave Mendoza angelica.arroyavem@udea.edu.co ----
+#------- CC 1040756574  ---------------------------------------------------
+#------- Curso Básico de Procesamiento de Digital de Imágenes -------------
+#------- V0 Abril de 2010--------------------------------------------------
+#--------------------------------------------------------------------------
 
 # DESCRIPTION
 # THE GAME! It is a construction simulator in which you must build a 7-story building !. 
