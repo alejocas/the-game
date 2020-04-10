@@ -1,22 +1,28 @@
 import pygame
 import cv2
 import numpy as np
+import random
 
 
 pygame.init()
 
 #Tamaño de la ventana del juego que abre pygame
-win = pygame.display.set_mode((640, 480))
+game_height = 722
+win = pygame.display.set_mode((640, game_height))
 #Título de la ventana de pygame
 pygame.display.set_caption("The Game")
-
+bg = pygame.image.load('./Assets/bkg.png')
+floor = pygame.image.load('./Assets/roofPP.png')
+first_floor = pygame.image.load('./Assets/first_floor2.png')
+win.blit(bg, (0,0))
+pygame.display.update() 
 #Coordenadas iniciales de la figura
 x = 0
 y = 0
 #Tamaño de la figura
 width = 60
-height = 80
-
+height = 73
+x_first_floor = random.randint(10, 600)
 red_detected = False
 step_size = 10
 #Velicidad a la que se mueve la figura, la velocidad es la cantidad de pixeles que se mueve
@@ -35,6 +41,7 @@ lower_blue = np.array ([l_h, l_s, l_v]) #Umbral del azul bajo
 higher_blue = np.array([u_h, u_s, u_v]) #Umbral del azul alto :3
 lower_red = np.array ([0, 161, 0]) #Umbral del rojo bajo
 higher_red = np.array([17,219, 255]) #Umbral del rojo alto :3
+
 
 def color_capture(cap, higher_color, lower_color, x):
     #Capturar la imagen
@@ -61,39 +68,48 @@ def color_capture(cap, higher_color, lower_color, x):
 
 def draw_still_rectangles(rect_array):
     for i in range(len(rect_array)):
-        draw_rectangle(rect_array[i], (0, 255, 0))
-        pygame.display.update(rect_array[i])
+        floor_image,x_pos,y_pos = rect_array[i]
+        draw_floor(floor_image,x_pos, y_pos)
+        # pygame.display.update(rect_array[i])
 
-def draw_rectangle(rectangle, color):
-    return pygame.draw.rect(win, color, rectangle)
+def draw_floor(floor_image,x_pos, y_pos):
+    win.blit(floor_image,(x_pos, y_pos))
 
 # Inicialización de la cámara
 cap = cv2.VideoCapture(0)
 print(cap.get(3), cap.get(4))
-rect_stack = [(0, 480, 640, 1)]
+floor_stack = []
 while run:
     pygame.time.delay(100)  # This will delay the game the given amount of milliseconds. In our casee 0.1 seconds will be the delay
     x = color_capture(cap, higher_blue, lower_blue, x)  # Obtenemos las coordenadas del objeto azul
-    red_validation = color_capture(cap, higher_red, lower_red, 0);
+    red_validation = color_capture(cap, higher_red, lower_red, 0)
     # Movimientos de la figura
     keys = pygame.key.get_pressed()  # This will give us a dictonary where each key has a value of 1 or 0. Where 1 is pressed and 0 is not pressed.
     if not(red_detected):  # Checks is user is not putting a red object
         if red_validation != 0:
             red_detected = True
     else:
-        condition = (y <= 480 - height) if len(rect_stack) == 0 else (y + height <= rect_stack[len(rect_stack) - 1][1])
-        if condition:
-            y += step_size
-        else:  # This will execute if our jump is finished
-            red_detected = False
-            falled_rect = (x, y, width, height)
-            rect_stack.append(falled_rect)
-            x, y = 0, 0
-            # Resetting our Variables
-    win.fill((0,0,0))  # Fills the screen with black
-    actual_rect = (x, y, width, height)
-    actual_rect = draw_rectangle(actual_rect, (255, 0, 0)) # This takes: window/surface, color, rect
-    draw_still_rectangles(rect_stack)
+        if x >= x_first_floor - 50 and x <= x_first_floor + 50: 
+            if (y + height<= floor_stack[len(floor_stack) - 1][2]):
+                y += step_size
+            else:  # This will execute if our jump is finished
+                red_detected = False
+                falled_floor = (floor,x, y)
+                floor_stack.append(falled_floor)
+                x, y = 0, 0
+                # Resetting our Variables
+        else:
+            if (y + height<= game_height):
+                y += step_size
+            else:
+                red_detected = False
+                x, y = 0, 0
+    win.blit(bg, (0,0))
+    draw_floor(floor,x,y)
+    draw_still_rectangles(floor_stack)
+    if len(floor_stack) == 0:
+        first_floor_stack = (first_floor,x_first_floor,615)
+        floor_stack.append(first_floor_stack)
     pygame.display.update()
  
     # For closing the windows
